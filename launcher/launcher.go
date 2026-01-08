@@ -19,7 +19,7 @@ import (
 	"github.com/xtls/xray-core/infra/conf/serial"
 	"github.com/xtls/xray-core/main/confloader"
 
-	"xray-acme/cert"
+	"xray-acme/acme"
 	"xray-acme/config"
 )
 
@@ -30,7 +30,7 @@ type Launcher struct {
 	config *config.Config
 
 	// certManager 证书管理器
-	certManager *cert.Manager
+	certManager *acme.Manager
 
 	// xrayConfig Xray 配置对象
 	xrayConfig *conf.Config
@@ -47,7 +47,7 @@ type Launcher struct {
 //
 // 返回:
 //   - *Launcher: Launcher 实例
-func New(cfg *config.Config, certMgr *cert.Manager) *Launcher {
+func New(cfg *config.Config, certMgr *acme.Manager) *Launcher {
 	return &Launcher{
 		config:      cfg,
 		certManager: certMgr,

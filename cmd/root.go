@@ -13,7 +13,7 @@ import (
 	// 导入 Xray 所有内置功能
 	_ "github.com/xtls/xray-core/main/distro/all"
 
-	"xray-acme/cert"
+	"xray-acme/acme"
 	"xray-acme/config"
 	"xray-acme/launcher"
 )
@@ -82,7 +82,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	}
 
 	// 2. 创建证书管理器
-	certManager := cert.NewManager(cfg)
+	certManager := acme.NewManager(cfg)
 
 	// 3. 创建并运行启动器
 	xrayLauncher := launcher.New(cfg, certManager)
