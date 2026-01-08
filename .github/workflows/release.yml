@@ -43,7 +43,7 @@ jobs:
           BIN_NAME=xray-acme
           OUT=dist/${BIN_NAME}-${GOOS}-${GOARCH}
           if [ "$GOOS" = "windows" ]; then OUT=${OUT}.exe; fi
-          GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=$CGO_ENABLED go build -ldflags "-s -w" -o "$OUT" ./...
+          GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=$CGO_ENABLED go build -ldflags "-s -w" -o "$OUT" 
 
       - name: Upload asset to GitHub Release
         uses: softprops/action-gh-release@v2
