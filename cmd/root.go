@@ -4,18 +4,15 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
+	"xray-acme/cmd/api"
 
 	"github.com/spf13/cobra"
 
 	// 导入 Xray 所有内置功能
 	_ "github.com/xtls/xray-core/main/distro/all"
 
-	"xray-acme/acme"
 	"xray-acme/config"
-	"xray-acme/launcher"
 )
 
 // Version 程序版本号
@@ -27,6 +24,10 @@ var (
 	dpID    string // DNSPod API ID
 	dpToken string // DNSPod API Token
 	email   string // Let's Encrypt 注册邮箱
+)
+
+var (
+	cfg *config.Config
 )
 
 // rootCmd 根命令
@@ -48,13 +49,18 @@ var rootCmd = &cobra.Command{
   export EMAIL="your@email.com"
   xray-acme`,
 	Version: Version,
-	RunE:    runRoot,
+	RunE:    run,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// 读取配置
+		cfg = buildConfig()
+		return nil
+	},
 }
 
 // Execute 执行根命令
 // 这是 CLI 的主入口点
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
 }
@@ -69,36 +75,13 @@ func init() {
 		"DNSPod API Token (也可通过环境变量 DP_TOKEN 设置)")
 	rootCmd.PersistentFlags().StringVar(&email, "email", "",
 		"Let's Encrypt 注册邮箱 (也可通过环境变量 EMAIL 设置)")
-}
 
-// runRoot 根命令的执行逻辑
-func runRoot(cmd *cobra.Command, args []string) error {
-	log.Printf("Xray ACME v%s 启动中...", Version)
-
-	// 1. 构建配置（命令行参数优先于环境变量）
-	cfg, err := buildConfig()
-	if err != nil {
-		return fmt.Errorf("配置加载失败: %w", err)
-	}
-
-	// 2. 创建证书管理器
-	certManager := acme.NewManager(cfg)
-
-	// 3. 创建并运行启动器
-	xrayLauncher := launcher.New(cfg, certManager)
-
-	ctx := context.Background()
-	if err := xrayLauncher.Run(ctx); err != nil {
-		return fmt.Errorf("启动失败: %w", err)
-	}
-
-	log.Println("Xray ACME 已退出")
-	return nil
+	rootCmd.AddCommand(api.Cmd)
 }
 
 // buildConfig 构建配置对象
 // 命令行参数优先于环境变量
-func buildConfig() (*config.Config, error) {
+func buildConfig() *config.Config {
 	cfg := &config.Config{
 		DNS: config.DNSConfig{
 			ProviderID:    getValueWithFallback(dpID, os.Getenv(config.EnvDNSPodID)),
@@ -111,12 +94,7 @@ func buildConfig() (*config.Config, error) {
 			ConfigPath: cfgFile,
 		},
 	}
-
-	if err := cfg.Validate(); err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
+	return cfg
 }
 
 // getValueWithFallback 获取值，如果主值为空则使用备选值
